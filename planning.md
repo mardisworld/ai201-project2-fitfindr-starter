@@ -15,19 +15,21 @@ You must have at least 3 tools. The three required tools are listed — add any 
 ### Tool 1: search_listings
 
 **What it does:**
-<!-- Describe what this tool does in 1–2 sentences -->
+search_listings returns 3 matching listings sorted by relevance. 
 
 **Input parameters:**
 <!-- List each parameter, its type, and what it represents -->
-- `description` (str): ...
-- `size` (str): ...
-- `max_price` (float): ...
+- `description` (str): Description of item user is looking for
+- `size` (str): Size of item user is looking for
+- `max_price` (float): Maximum price user is willing to pay
 
 **What it returns:**
-<!-- Describe the return value — what fields does a result contain? -->
+It returns three matching listings sorteed by result. The result contains:
+- List of 3 dictionary entries matching search conditions by relevance
+- The dictionary values have a key containing description and price of item, and the value contains where the item was found and its condition.
 
 **What happens if it fails or returns nothing:**
-<!-- What should the agent do if no listings match? -->
+If search_listings returns nothing, FitFindr tells the user what to try differently and stops — it does not call suggest_outfit with empty input.
 
 ---
 
@@ -38,14 +40,15 @@ You must have at least 3 tools. The three required tools are listed — add any 
 
 **Input parameters:**
 <!-- List each parameter, its type, and what it represents -->
-- `new_item` (dict): ...
-- `wardrobe` (dict): ...
+- `new_item` (dict): The item the user is considering buying. This was the item selected from the list of dictionaries returned by search_listings. 
+- `wardrobe` (dict): The wardrobe dictionary with an 'items' key containing a list of wardrobe item dictionaries that the user already owns. M
 
 **What it returns:**
-<!-- Describe the return value -->
+A string with outfit containing suggestions with how to wear the new item with the user's existing wardrobe.
 
 **What happens if it fails or returns nothing:**
-<!-- What should the agent do if the wardrobe is empty or no outfit can be suggested? -->
+- If the wardrobe is empty, it should offer general styling advice for the item rather than raising an exception or returning an empty string.
+- If it fails for another reason, a fallback error message should display a message like "I'm not sure how to style this item." It then stops running - it does not suggest_outfit with empty input.
 
 ---
 
@@ -56,13 +59,25 @@ You must have at least 3 tools. The three required tools are listed — add any 
 
 **Input parameters:**
 <!-- List each parameter, its type, and what it represents -->
-- `outfit` (...): ...
+- `outfit` (...):  The outfit suggestion string from suggest_outfit().
+- `new_item`: The listing dict for the thrifted item.
 
 **What it returns:**
-<!-- Describe the return value -->
+- `caption`: A 2–4 sentence string usable as an Instagram/TikTok caption.
+The caption should: 
+    - Feel casual and authentic (like a real outfit of the day post, not a product description)
+    - Mention the item name, price, and platform naturally (once each)
+    - Capture the outfit vibe in specific terms
+    - Sound different each time for different inputs (use higher LLM temperature)
 
 **What happens if it fails or returns nothing:**
-<!-- What should the agent do if the outfit data is incomplete? -->
+- If outfit is empty or missing, return a descriptive error message string like "Outfit suggestion is missing. Please try again." Do not raise an exception.
+- If create_fit_card fails for another reason, it should display a message like "I was unable to create a caption for this outfit."  It then stops running - it does not call LLM  with empty input.
+
+**What create_fit_card should do: **
+1. Guard against an empty or whitespace-only outfit string.
+2. Build a prompt that gives the LLM the item details and the outfit, and asks for a caption matching the style guidelines above.
+3. Call the LLM and return the response.
 
 ---
 
@@ -77,6 +92,8 @@ You must have at least 3 tools. The three required tools are listed — add any 
 **How does your agent decide which tool to call next?**
 <!-- Describe the logic your planning loop uses. What does it look at? What conditions change its behavior? How does it know when it's done? -->
 
+
+
 ---
 
 ## State Management
@@ -90,11 +107,11 @@ You must have at least 3 tools. The three required tools are listed — add any 
 
 For each tool, describe the specific failure mode you're handling and what the agent does in response.
 
-| Tool | Failure mode | Agent response |
-|------|-------------|----------------|
-| search_listings | No results match the query | |
-| suggest_outfit | Wardrobe is empty | |
-| create_fit_card | Outfit input is missing or incomplete | |
+| Tool                | Failure mode                          | Agent response |
+|---------------------|---------------------------------------|----------------------------------------------------------------------------------------------------------------------------------------|
+| search_listings.    | No results match the query            | FitFindr tells the user what to try differently and stops — it does not call suggest_outfit with empty input.                          |
+| suggest_outfit      | Wardrobe is empty                     | it should offer general styling advice for the item rather than raising an exception or returning an empty string.                     |
+| create_fit_card     | Outfit input is missing or incomplete | return a descriptive error message string like "Outfit suggestion is missing. Please try again." Do not raise an exception.            |
 
 ---
 
@@ -137,13 +154,25 @@ Write out what a full user interaction looks like from start to finish — tool 
 **Example user query:** "I'm looking for a vintage graphic tee under $30. I mostly wear baggy jeans and chunky sneakers. What's out there and how would I style it?"
 
 **Step 1:**
-<!-- What does the agent do first? Which tool is called? With what input? -->
+-Initialize the session with _new_session().
+- `run_agent`: Main agent entry point. Runs the FitFindr planning loop for a single user interaction and returns the completed session dict.
 
 **Step 2:**
 <!-- What happens next? What was returned from step 1? What tool is called now? -->
+Step 2: Parse the user's query to extract a description, size, and max_price. 
 
 **Step 3:**
-<!-- Continue until the full interaction is complete -->
+ Step 3: Call search_listings() with the parsed parameters. Store results in session["search_results"]. If no results: set session["error"] to a helpful message and return the session early. Do NOT proceed to suggest_outfit with empty input.
+
+**Step 4:** In search_listings() function, select the item to use (e.g., the top result). Store it in session["selected_item"].
+
+**Step 5:** Call suggest_outfit() with the selected item and wardrobe. Store the result in session["outfit_suggestion"].
+
+**Step 6:**  Call create_fit_card() with the outfit suggestion and selected item. Store the result in session["fit_card"].
+    
+** Step 7:** Return the session.
+
+     
 
 **Final output to user:**
 <!-- What does the user actually see at the end? -->

@@ -81,8 +81,7 @@ def suggest_outfit(new_item: dict, wardrobe: dict) -> str:
 
     Args:
         new_item: A listing dict (the item the user is considering buying).
-        wardrobe: A wardrobe dict with an 'items' key containing a list of
-                  wardrobe item dicts. May be empty — handle this gracefully.
+        wardrobe: A wardrobe dict with an 'items' key containing a list ofwardrobe item dicts. May be empty — handle this gracefully.
 
     Returns:
         A non-empty string with outfit suggestions.
