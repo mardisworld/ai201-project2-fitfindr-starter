@@ -18,6 +18,8 @@ Usage (once implemented):
     print(result["error"])   # None on success
 """
 
+import re
+
 from tools import search_listings, suggest_outfit, create_fit_card
 
 
@@ -46,6 +48,14 @@ def _new_session(query: str, wardrobe: dict) -> dict:
 
 
 # ── planning loop ─────────────────────────────────────────────────────────────
+
+def _format_price(price: float | int | None) -> str | None:
+    if price is None:
+        return None
+    if isinstance(price, float) and price.is_integer():
+        return f"${int(price)}"
+    return f"${price:.2f}"
+
 
 def run_agent(query: str, wardrobe: dict) -> dict:
     """
@@ -92,9 +102,55 @@ def run_agent(query: str, wardrobe: dict) -> dict:
     Before writing code, complete the Planning Loop and State Management sections
     of planning.md — your implementation should match what you described there.
     """
-    # TODO: implement the planning loop
     session = _new_session(query, wardrobe)
-    session["error"] = "Planning loop not yet implemented."
+
+    description = query.strip()
+    size = None
+    max_price = None
+
+
+    # Extract price (supports formats like "$30", "under $30", "under 30 dollars"). If multiple prices are mentioned, takes the highest as the max_price.
+    price_matches = re.findall(r"\$\s*([0-9]+(?:\.[0-9]+)?)|under\s*\$?\s*([0-9]+(?:\.[0-9]+)?)", query, re.IGNORECASE)
+    if price_matches:
+        prices = [float(p) for pair in price_matches for p in pair if p]
+        if prices:
+            max_price = max(prices)
+
+    # Extract size (supports formats like "size M", "size 8", "size S/M"). If multiple sizes are mentioned, takes the first one.
+    size_match = re.search(r"\bsize\s*([A-Za-z0-9/+-]+)\b", query, re.IGNORECASE)
+    if size_match:
+        size = size_match.group(1).strip()
+
+    session["parsed"] = {
+        "description": description,
+        "size": size,
+        "max_price": max_price,
+        "max_price_formatted": _format_price(max_price),
+    }
+
+    session["search_results"] = search_listings(
+        description=description,
+        size=size,
+        max_price=max_price,
+    )
+
+    if not session["search_results"]:
+        session["error"] = (
+            "I couldn't find any listings that matched that request. "
+            "Try broadening the description, removing the size, or increasing your budget."
+        )
+        return session
+
+    session["selected_item"] = session["search_results"][0]
+    session["outfit_suggestion"] = suggest_outfit(
+        session["selected_item"],
+        wardrobe,
+    )
+    session["fit_card"] = create_fit_card(
+        session["outfit_suggestion"],
+        session["selected_item"],
+    )
+
     return session
 
 

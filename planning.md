@@ -1,10 +1,5 @@
 # FitFindr — planning.md
 
-> Complete this document before writing any implementation code.
-> Your spec and agent diagram are what you'll use to direct AI tools (Claude, Copilot, etc.) to generate your implementation — the more specific they are, the more useful the generated code will be.
-> Your planning.md will be reviewed as part of your submission.
-> Update it before starting any stretch features.
-
 ---
 
 ## Tools
@@ -24,19 +19,21 @@ search_listings returns 3 matching listings sorted by relevance.
 - `max_price` (float): Maximum price user is willing to pay
 
 **What it returns:**
-It returns three matching listings sorteed by result. The result contains:
+It returns three matching listings sorted by result. The result contains:
 - List of 3 dictionary entries matching search conditions by relevance
 - The dictionary values have a key containing description and price of item, and the value contains where the item was found and its condition.
 
 **What happens if it fails or returns nothing:**
 If search_listings returns nothing, FitFindr tells the user what to try differently and stops — it does not call suggest_outfit with empty input.
+If search_listings only finds one or two matches, it returns the matches and logs a message "I only found 1 entry that matched your search criteria."
+or "I only found 2 entries that matched your search criteria."
 
 ---
 
 ### Tool 2: suggest_outfit
 
 **What it does:**
-<!-- Describe what this tool does in 1–2 sentences -->
+suggest_outfit suggests an outfit based on the selected item and the user's current wardrobe. 
 
 **Input parameters:**
 <!-- List each parameter, its type, and what it represents -->
@@ -55,7 +52,7 @@ A string with outfit containing suggestions with how to wear the new item with t
 ### Tool 3: create_fit_card
 
 **What it does:**
-<!-- Describe what this tool does in 1–2 sentences -->
+create_fit_card creates a caption(fit_card) with the selected outfit, suitable for Instagram or X. 
 
 **Input parameters:**
 <!-- List each parameter, its type, and what it represents -->
@@ -110,8 +107,8 @@ For each tool, describe the specific failure mode you're handling and what the a
 | Tool                | Failure mode                          | Agent response |
 |---------------------|---------------------------------------|----------------------------------------------------------------------------------------------------------------------------------------|
 | search_listings.    | No results match the query            | FitFindr tells the user what to try differently and stops — it does not call suggest_outfit with empty input.                          |
-| suggest_outfit      | Wardrobe is empty                     | it should offer general styling advice for the item rather than raising an exception or returning an empty string.                     |
-| create_fit_card     | Outfit input is missing or incomplete | return a descriptive error message string like "Outfit suggestion is missing. Please try again." Do not raise an exception.            |
+| suggest_outfit      | Wardrobe is empty                     | It should offer general styling advice for the item rather than raising an exception or returning an empty string.                     |
+| create_fit_card     | Outfit input is missing or incomplete | It should return a descriptive error message string like "Outfit suggestion is missing. Please try again." Do not raise an exception.  |
 
 ---
 
@@ -128,6 +125,9 @@ For each tool, describe the specific failure mode you're handling and what the a
 
 ---
 
+![alt text](<FitFindr Flow Diagram.png>)
+
+
 ## AI Tool Plan
 
 <!-- For each part of the implementation below, describe:
@@ -143,6 +143,17 @@ For each tool, describe the specific failure mode you're handling and what the a
 
 **Milestone 3 — Individual tool implementations:**
 
+### Tool 1: search_listings
+I'll give Claude my Tool 1 spec (inputs, return value, failure mode) and ask it to implement search_listings() using load_listings() from the data loader — then test it against 3 queries before trusting it.
+
+### Tool 2: suggest_outfit
+I'll give Claude my Tool 2 spec (inputs, return value, failure mode) and ask it to implement suggest_outfit() using load_wardrobe_schema() / get_example_wardrobe() / et_empty_wardrobe() -> dict: from the data loader. I will then test it against 3 new items before trusting it.
+
+### Tool 3: create_fit_card
+
+I'll give Claude my Tool 3 spec (inputs, return value, failure mode) and ask it to implement create_fit_card() using the LLM. I will then test it against 3 new outfits before trusting it.
+
+
 **Milestone 4 — Planning loop and state management:**
 
 ---
@@ -153,16 +164,11 @@ Write out what a full user interaction looks like from start to finish — tool 
 
 **Example user query:** "I'm looking for a vintage graphic tee under $30. I mostly wear baggy jeans and chunky sneakers. What's out there and how would I style it?"
 
-**Step 1:**
--Initialize the session with _new_session().
-- `run_agent`: Main agent entry point. Runs the FitFindr planning loop for a single user interaction and returns the completed session dict.
+**Step 1:** Initialize the session with _new_session(). Call `run_agent`: Main agent entry point. Runs the FitFindr planning loop for a single user interaction and returns the completed session dict.(overall flow loop).
 
-**Step 2:**
-<!-- What happens next? What was returned from step 1? What tool is called now? -->
-Step 2: Parse the user's query to extract a description, size, and max_price. 
+**Step 2:** Parse the user's query to extract a description, size, and max_price. 
 
-**Step 3:**
- Step 3: Call search_listings() with the parsed parameters. Store results in session["search_results"]. If no results: set session["error"] to a helpful message and return the session early. Do NOT proceed to suggest_outfit with empty input.
+**Step 3:** Call search_listings() with the parsed parameters. Store results in session["search_results"]. If no results: set session["error"] to a helpful message and return the session early. Do NOT proceed to suggest_outfit with empty input.
 
 **Step 4:** In search_listings() function, select the item to use (e.g., the top result). Store it in session["selected_item"].
 
@@ -170,7 +176,7 @@ Step 2: Parse the user's query to extract a description, size, and max_price.
 
 **Step 6:**  Call create_fit_card() with the outfit suggestion and selected item. Store the result in session["fit_card"].
     
-** Step 7:** Return the session.
+**Step 7:** Return the session.
 
      
 
