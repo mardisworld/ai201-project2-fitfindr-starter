@@ -15,12 +15,13 @@ Usage (once implemented):
         wardrobe=get_example_wardrobe(),
     )
     print(result["fit_card"])
-    print(result["error"])   # None on success
+    print(result["error"]) # None on success
 """
 
 import re
 
 from tools import search_listings, suggest_outfit, create_fit_card
+from utils.data_loader import load_listings
 
 
 # ── session state ─────────────────────────────────────────────────────────────
@@ -141,7 +142,15 @@ def run_agent(query: str, wardrobe: dict) -> dict:
         )
         return session
 
-    session["selected_item"] = session["search_results"][0]
+    # search_results are stripped dicts; resolve the full listing for downstream tools
+    top_result = session["search_results"][0]
+    top_description = next(iter(top_result))
+    all_listings = load_listings()
+    session["selected_item"] = next(
+    (l for l in all_listings if l.get("description", "").strip() in top_description),
+    top_result,
+    )
+
     session["outfit_suggestion"] = suggest_outfit(
         session["selected_item"],
         wardrobe,
@@ -157,7 +166,7 @@ def run_agent(query: str, wardrobe: dict) -> dict:
 # ── CLI test ──────────────────────────────────────────────────────────────────
 
 if __name__ == "__main__":
-    from utils.data_loader import get_example_wardrobe, get_empty_wardrobe
+    from utils.data_loader import get_example_wardrobe
 
     print("=== Happy path: graphic tee ===\n")
     session = run_agent(

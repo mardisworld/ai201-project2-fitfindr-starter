@@ -6,7 +6,7 @@ your job is to fill in handle_query() so it calls run_agent() and maps
 the session results to the three output panels.
 
 Run with:
-    python app.py
+python app.py
 
 Then open the localhost URL shown in your terminal (usually http://localhost:7860,
 but check your terminal — the port may differ).
@@ -29,9 +29,9 @@ def handle_query(user_query: str, wardrobe_choice: str) -> tuple[str, str, str]:
         wardrobe_choice: Either "Example wardrobe" or "Empty wardrobe (new user)".
 
     Returns:
-        A tuple of three strings:
-            (listing_text, outfit_suggestion, fit_card)
-        Each string maps to one of the three output panels in the UI.
+    A tuple of three strings:
+    (listing_text, outfit_suggestion, fit_card)
+    Each string maps to one of the three output panels in the UI.
 
     TODO:
         1. Guard against an empty query (return early with an error message).
@@ -43,8 +43,26 @@ def handle_query(user_query: str, wardrobe_choice: str) -> tuple[str, str, str]:
            string and return it along with session["outfit_suggestion"] and
            session["fit_card"].
     """
-    # TODO: implement this function
-    return "Agent not yet implemented.", "", ""
+    if not user_query or not user_query.strip():
+        return "Please enter a search query.", "", ""
+
+    wardrobe = (
+        get_example_wardrobe()
+        if wardrobe_choice == "Example wardrobe"
+            else get_empty_wardrobe()
+    )
+
+    session = run_agent(query=user_query, wardrobe=wardrobe)
+
+    if session["error"]:
+        return session["error"], "", ""
+
+    top_result = session["search_results"][0]
+    label = next(iter(top_result))
+    details = top_result[label]
+    listing_text = str({label: details})
+
+    return listing_text, session["outfit_suggestion"], session["fit_card"]
 
 
 # ── interface ─────────────────────────────────────────────────────────────────
@@ -54,7 +72,7 @@ EXAMPLE_QUERIES = [
     "90s track jacket in size M",
     "flowy midi skirt under $40",
     "black combat boots size 8",
-    "designer ballgown size XXS under $5",   # deliberate no-results test
+    "designer ballgown size XXS under $5",  # deliberate no-results test
 ]
 
 def build_interface():
@@ -105,11 +123,6 @@ Describe what you're looking for — include size and price if you want to filte
         )
 
         submit_btn.click(
-            fn=handle_query,
-            inputs=[query_input, wardrobe_choice],
-            outputs=[listing_output, outfit_output, fitcard_output],
-        )
-        query_input.submit(
             fn=handle_query,
             inputs=[query_input, wardrobe_choice],
             outputs=[listing_output, outfit_output, fitcard_output],

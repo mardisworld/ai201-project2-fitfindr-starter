@@ -149,11 +149,11 @@ def search_listings(
 
         listing_text = _excerpt_text(listing)
         title_tokens = _tokenize(listing.get("title", ""))
-        score = sum(1 for token in query_tokens if len(token) > 1 and token in listing_text)
+        score = sum(1 for token in query_tokens if len(token) > 1 and not token.isdigit() and token in listing_text)
 
         # Prefer results where the title contains an exact query keyword.
         # This makes actual jackets rank above related items like shackets.
-        exact_title_matches = sum(1 for token in query_tokens if token in title_tokens)
+        exact_title_matches = sum(1 for token in query_tokens if len(token) > 1 and not token.isdigit() and token in title_tokens)
         score += exact_title_matches * 5
 
         if score > 0:
@@ -184,6 +184,7 @@ def search_listings(
 
 
 # ── Tool 2: suggest_outfit ────────────────────────────────────────────────────
+
 
 def suggest_outfit(new_item: dict, wardrobe: dict) -> str:
     """
@@ -332,6 +333,7 @@ def create_fit_card(outfit: str, new_item: dict) -> str:
         If outfit is empty or missing, return a descriptive error message
         string — do NOT raise an exception.
     """
+    
     if not outfit or not outfit.strip():
         return "Outfit suggestion is missing. Please try again."
 

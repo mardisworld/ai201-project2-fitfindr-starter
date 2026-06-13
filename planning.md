@@ -10,7 +10,7 @@ You must have at least 3 tools. The three required tools are listed — add any 
 ### Tool 1: search_listings
 
 **What it does:**
-search_listings returns 3 matching listings sorted by relevance. 
+search_listings returns 3 matching listings sorted by relevance.
 
 **Input parameters:**
 <!-- List each parameter, its type, and what it represents -->
@@ -33,11 +33,11 @@ or "I only found 2 entries that matched your search criteria."
 ### Tool 2: suggest_outfit
 
 **What it does:**
-suggest_outfit suggests an outfit based on the selected item and the user's current wardrobe. 
+suggest_outfit suggests an outfit based on the selected item and the user's current wardrobe.
 
 **Input parameters:**
 <!-- List each parameter, its type, and what it represents -->
-- `new_item` (dict): The item the user is considering buying. This was the item selected from the list of dictionaries returned by search_listings. 
+- `new_item` (dict): The item the user is considering buying. This was the item selected from the list of dictionaries returned by search_listings.
 - `wardrobe` (dict): The wardrobe dictionary with an 'items' key containing a list of wardrobe item dictionaries that the user already owns. M
 
 **What it returns:**
@@ -52,7 +52,7 @@ A string with outfit containing suggestions with how to wear the new item with t
 ### Tool 3: create_fit_card
 
 **What it does:**
-create_fit_card creates a caption(fit_card) with the selected outfit, suitable for Instagram or X. 
+create_fit_card creates a caption(fit_card) with the selected outfit, suitable for Instagram or X.
 
 **Input parameters:**
 <!-- List each parameter, its type, and what it represents -->
@@ -69,18 +69,13 @@ The caption should:
 
 **What happens if it fails or returns nothing:**
 - If outfit is empty or missing, return a descriptive error message string like "Outfit suggestion is missing. Please try again." Do not raise an exception.
-- If create_fit_card fails for another reason, it should display a message like "I was unable to create a caption for this outfit."  It then stops running - it does not call LLM  with empty input.
+- If create_fit_card fails for another reason, it should display a message like "I was unable to create a caption for this outfit." It then stops running - it does not call LLM with empty input.
 
 **What create_fit_card should do: **
 1. Guard against an empty or whitespace-only outfit string.
 2. Build a prompt that gives the LLM the item details and the outfit, and asks for a caption matching the style guidelines above.
 3. Call the LLM and return the response.
 
----
-
-### Additional Tools (if any)
-
-<!-- Copy the block above for any tools beyond the required three -->
 
 ---
 
@@ -104,23 +99,27 @@ The caption should:
 
 For each tool, describe the specific failure mode you're handling and what the agent does in response.
 
-| Tool                | Failure mode                          | Agent response |
-|---------------------|---------------------------------------|----------------------------------------------------------------------------------------------------------------------------------------|
-| search_listings.    | No results match the query            | FitFindr tells the user what to try differently and stops — it does not call suggest_outfit with empty input.                          |
-| suggest_outfit      | Wardrobe is empty                     | It should offer general styling advice for the item rather than raising an exception or returning an empty string.                     |
-| create_fit_card     | Outfit input is missing or incomplete | It should return a descriptive error message string like "Outfit suggestion is missing. Please try again." Do not raise an exception.  |
+| Tool | Failure mode | Agent response
+|---------------------|--------------------------------------------------------------------------------|
+| search_listings. | No results match the query | FitFindr tells the user what to try differently and stops — it does not call suggest_outfit with empty input. |
+| suggest_outfit | Wardrobe is empty | It should offer general styling advice for the item rather than raising an exception or returning an empty string. If it fails for another reason, it stops. |
+| create_fit_card | Outfit input is missing or incomplete | It should return a descriptive error message string like "Outfit suggestion is missing. Please try again." Do not raise an exception. If it fails for another reason, it stops. |
 
 ---
 
 ## Architecture
 
 <!-- Draw a diagram of your agent showing how the components connect:
-     User input → Planning Loop → Tools (search_listings, suggest_outfit, create_fit_card)
-                                                                          ↕
-                                                                   State / Session
+User input → Planning Loop → Tools (search_listings, suggest_outfit, 
+create_fit_card)
+↕
+                                                                State / 
+Session
      Show what triggers each tool, how state flows between them, and where error paths branch off.
-     ASCII art, a Mermaid diagram (https://mermaid.js.org/syntax/flowchart.html), or an embedded
-     sketch are all fine. You'll share this diagram with an AI tool when asking it to implement
+     ASCII art, a Mermaid diagram 
+(https://mermaid.js.org/syntax/flowchart.html), or an embedded
+     sketch are all fine. You'll share this diagram with an AI tool when asking 
+it to implement
      the planning loop and each individual tool. -->
 
 ---
@@ -132,7 +131,8 @@ For each tool, describe the specific failure mode you're handling and what the a
 
 <!-- For each part of the implementation below, describe:
      - Which AI tool you plan to use (Claude, Copilot, ChatGPT, etc.)
-     - What you'll give it as input (which sections of this planning.md, your agent diagram)
+     - What you'll give it as input (which sections of this planning.md, your 
+agent diagram)
      - What you expect it to produce
      - How you'll verify the output matches your spec before moving on
 
@@ -166,7 +166,8 @@ Write out what a full user interaction looks like from start to finish — tool 
 
 **Step 1:** Initialize the session with _new_session(). Call `run_agent`: Main agent entry point. Runs the FitFindr planning loop for a single user interaction and returns the completed session dict.(overall flow loop).
 
-**Step 2:** Parse the user's query to extract a description, size, and max_price. 
+**Step 2:** Parse the user's query to extract a description, size, and 
+max_price. 
 
 **Step 3:** Call search_listings() with the parsed parameters. Store results in session["search_results"]. If no results: set session["error"] to a helpful message and return the session early. Do NOT proceed to suggest_outfit with empty input.
 
@@ -174,11 +175,9 @@ Write out what a full user interaction looks like from start to finish — tool 
 
 **Step 5:** Call suggest_outfit() with the selected item and wardrobe. Store the result in session["outfit_suggestion"].
 
-**Step 6:**  Call create_fit_card() with the outfit suggestion and selected item. Store the result in session["fit_card"].
-    
+**Step 6:** Call create_fit_card() with the outfit suggestion and selected item. Store the result in session["fit_card"].
 **Step 7:** Return the session.
 
-     
 
 **Final output to user:**
-<!-- What does the user actually see at the end? -->
+fit_card/caption
