@@ -71,7 +71,7 @@ The caption should:
 - If outfit is empty or missing, return a descriptive error message string like "Outfit suggestion is missing. Please try again." Do not raise an exception.
 - If create_fit_card fails for another reason, it should display a message like "I was unable to create a caption for this outfit." It then stops running - it does not call LLM with empty input.
 
-**What create_fit_card should do: **
+**What create_fit_card should do:**
 1. Guard against an empty or whitespace-only outfit string.
 2. Build a prompt that gives the LLM the item details and the outfit, and asks for a caption matching the style guidelines above.
 3. Call the LLM and return the response.
@@ -91,7 +91,13 @@ If create_fit_card fails, it should display a message like "I was unable to crea
 
 **How does information from one tool get passed to the next?**
 <!-- Describe how your agent stores and accesses state within a session. What data is tracked? How is it passed between tool calls? -->
+The agent stores and accesses state by assinging state and passing it to other functions. For example,  session["fit-card"] calls create_fit_card with session["outfit_suggestion"] and  session["selected_item"]. Data that is tracked includes the user's query and wardrobe, "parsed", session["search_results"], top_result = session["search_results"][0], session["outfit_suggestion"] , and session["fit_card"]. 
 
+
+session["fit_card"] = create_fit_card(
+        session["outfit_suggestion"],
+        session["selected_item"],
+    )
 ---
 
 ## Error Handling
@@ -163,19 +169,49 @@ Write out what a full user interaction looks like from start to finish — tool 
 
 **Example user query:** "I'm looking for a vintage graphic tee under $30. I mostly wear baggy jeans and chunky sneakers. What's out there and how would I style it?"
 
-**Step 1:** Initialize the session with _new_session(). Call `run_agent`: Main agent entry point. Runs the FitFindr planning loop for a single user interaction and returns the completed session dict.(overall flow loop).
+**Step 1:**  Call `run_agent`: Main agent entry point.  session = run_agent(query=user_query, wardrobe=wardrobe): line 55 in app.py. Runs the FitFindr planning loop for a single user interaction and returns the completed session dict.(overall flow loop). Initialize the session with _new_session(). session = _new_session(query, wardrobe) - line 106 in agent.py
 
-**Step 2:** Parse the user's query to extract a description, size, and 
-max_price. 
+**Step 2:** Parse the user's query to extract a description, size, and max_price. 
+
+session["parsed"] = {
+        "description": description,
+        "size": size,
+        "max_price": max_price,
+        "max_price_formatted": _format_price(max_price),
+    } - lines 125 - 130 in agent.py
 
 **Step 3:** Call search_listings() with the parsed parameters. Store results in session["search_results"]. If no results: set session["error"] to a helpful message and return the session early. Do NOT proceed to suggest_outfit with empty input.
 
+session["search_results"] = search_listings(
+        description=description,
+        size=size,
+        max_price=max_price,
+    ) - lines 132 - 136 in agent.py
+
 **Step 4:** In search_listings() function, select the item to use (e.g., the top result). Store it in session["selected_item"].
+
+ session["selected_item"] = next(
+    (l for l in all_listings if l.get("description", "").strip() in top_description),
+    top_result,
+    ) - lines 149-152 in agent.py 
 
 **Step 5:** Call suggest_outfit() with the selected item and wardrobe. Store the result in session["outfit_suggestion"].
 
+   session["outfit_suggestion"] = suggest_outfit(
+        session["selected_item"],
+        wardrobe,
+    ) - lines 154-157 in agent.py 
+
 **Step 6:** Call create_fit_card() with the outfit suggestion and selected item. Store the result in session["fit_card"].
+
+    session["fit_card"] = create_fit_card(
+        session["outfit_suggestion"],
+        session["selected_item"],
+    ) - lines 158-161 in agent.py 
+
 **Step 7:** Return the session.
+
+  return session - line 163 in agent.py
 
 
 **Final output to user:**
