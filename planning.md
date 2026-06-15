@@ -82,9 +82,8 @@ The caption should:
 ## Planning Loop
 
 **How does your agent decide which tool to call next?**
-<!-- Describe the logic your planning loop uses. What does it look at? What conditions change its behavior? How does it know when it's done? -->
-
-
+search_listings will only call suggest_outfit if a listing (or 2, or 3 listings) are returned. If not, it sends a message to the user to try a different query. If suggest_outfit fails, - If it fails fo, a fallback error message will display a message like "I'm not sure how to style this item." It then stops running - it does not suggest_outfit with empty input, and it will not cal create_fit_card.
+If create_fit_card fails, it should display a message like "I was unable to create a caption for this outfit." It then stops running - it does not call LLM with empty input.
 
 ---
 
