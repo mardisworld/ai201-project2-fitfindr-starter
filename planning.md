@@ -104,11 +104,11 @@ session["fit_card"] = create_fit_card(
 
 For each tool, describe the specific failure mode you're handling and what the agent does in response.
 
-| Tool | Failure mode | Agent response
-|---------------------|--------------------------------------------------------------------------------|
-| search_listings. | No results match the query | FitFindr tells the user what to try differently and stops — it does not call suggest_outfit with empty input. |
-| suggest_outfit | Wardrobe is empty | It should offer general styling advice for the item rather than raising an exception or returning an empty string. If it fails for another reason, it stops. |
-| create_fit_card | Outfit input is missing or incomplete | It should return a descriptive error message string like "Outfit suggestion is missing. Please try again." Do not raise an exception. If it fails for another reason, it stops. |
+| Tool            | Failure mode                          | Agent response                                                                                                                                                                 | 
+|-----------------|---------------------------------------|--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| search_listings | No results match the query            | FitFindr tells the user what to try differently and stops — it does not call suggest_outfit with empty input.                                                                  |
+| suggest_outfit  | Wardrobe is empty                     | It should offer general styling advice for the item rather than raising an exception or returning an empty string. If it fails for another reason, it stops.                   |
+| create_fit_card | Outfit input is missing or incomplete | It should return a descriptive error message string like "Outfit suggestion is missing. Please try again." Do not raise an exception. If it fails for another reason, it stops.|
 
 ---
 

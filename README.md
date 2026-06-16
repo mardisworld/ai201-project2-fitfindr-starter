@@ -150,22 +150,17 @@ If create_fit_card fails, it should display a message like "I was unable to crea
 <!-- Describe how your agent stores and accesses state within a session. What data is tracked? How is it passed between tool calls? -->
 The agent stores and accesses state by assinging state and passing it to other functions. For example,  session["fit-card"] calls create_fit_card with session["outfit_suggestion"] and  session["selected_item"]. Data that is tracked includes the user's query and wardrobe, "parsed", session["search_results"], top_result = session["search_results"][0], session["outfit_suggestion"] , and session["fit_card"]. 
 
-
-session["fit_card"] = create_fit_card(
-        session["outfit_suggestion"],
-        session["selected_item"],
-    )
 ---
 
 ## Error Handling
 
 For each tool, describe the specific failure mode you're handling and what the agent does in response.
 
-| Tool | Failure mode | Agent response
-|---------------------|--------------------------------------------------------------------------------|
-| search_listings. | No results match the query | FitFindr tells the user what to try differently and stops — it does not call suggest_outfit with empty input. |
-| suggest_outfit | Wardrobe is empty | It should offer general styling advice for the item rather than raising an exception or returning an empty string. If it fails for another reason, it stops. |
-| create_fit_card | Outfit input is missing or incomplete | It should return a descriptive error message string like "Outfit suggestion is missing. Please try again." Do not raise an exception. If it fails for another reason, it stops. |
+| Tool            | Failure mode                          | Agent response                                                                                                                                                                 | 
+|-----------------|---------------------------------------|--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| search_listings | No results match the query            | FitFindr tells the user what to try differently and stops — it does not call suggest_outfit with empty input.                                                                  |
+| suggest_outfit  | Wardrobe is empty                     | It should offer general styling advice for the item rather than raising an exception or returning an empty string. If it fails for another reason, it stops.                   |
+| create_fit_card | Outfit input is missing or incomplete | It should return a descriptive error message string like "Outfit suggestion is missing. Please try again." Do not raise an exception. If it fails for another reason, it stops.|
 
 ---
 
