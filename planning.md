@@ -93,11 +93,6 @@ If create_fit_card fails, it should display a message like "I was unable to crea
 <!-- Describe how your agent stores and accesses state within a session. What data is tracked? How is it passed between tool calls? -->
 The agent stores and accesses state by assinging state and passing it to other functions. For example,  session["fit-card"] calls create_fit_card with session["outfit_suggestion"] and  session["selected_item"]. Data that is tracked includes the user's query and wardrobe, "parsed", session["search_results"], top_result = session["search_results"][0], session["outfit_suggestion"] , and session["fit_card"]. 
 
-
-session["fit_card"] = create_fit_card(
-        session["outfit_suggestion"],
-        session["selected_item"],
-    )
 ---
 
 ## Error Handling
